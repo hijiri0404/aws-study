@@ -1,0 +1,343 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'VPC-A, VPC-B, VPC-C with Transit Gateway configuration'
+
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair for SSH access
+    Default: my-key-pair
+  
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+Resources:
+  # VPC-A (10.1.0.0/16)
+  VPCA:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: VPC-A
+
+  VPCASubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCA
+      CidrBlock: 10.1.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: VPC-A-Subnet
+
+  VPCARouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCA
+      Tags:
+        - Key: Name
+          Value: VPC-A-RouteTable
+
+  VPCASubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref VPCASubnet
+      RouteTableId: !Ref VPCARouteTable
+
+  # VPC-B (10.2.0.0/16) - Transit Gateway Hub
+  VPCB:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.2.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: VPC-B
+
+  VPCBSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCB
+      CidrBlock: 10.2.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: VPC-B-Subnet
+
+  VPCBRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCB
+      Tags:
+        - Key: Name
+          Value: VPC-B-RouteTable
+
+  VPCBSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref VPCBSubnet
+      RouteTableId: !Ref VPCBRouteTable
+
+  # VPC-C (10.3.0.0/16)
+  VPCC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: VPC-C
+
+  VPCCSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCC
+      CidrBlock: 10.3.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: VPC-C-Subnet
+
+  VPCCRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCC
+      Tags:
+        - Key: Name
+          Value: VPC-C-RouteTable
+
+  VPCCSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref VPCCSubnet
+      RouteTableId: !Ref VPCCRouteTable
+
+  # Transit Gateway
+  TransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      AmazonSideAsn: 64512
+      Description: 'Transit Gateway for VPC-A, VPC-B, VPC-C'
+      DefaultRouteTableAssociation: enable
+      DefaultRouteTablePropagation: enable
+      DnsSupport: enable
+      VpnEcmpSupport: enable
+      Tags:
+        - Key: Name
+          Value: Main-TransitGateway
+
+  # Transit Gateway Attachments
+  TGWAttachmentA:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref VPCA
+      SubnetIds:
+        - !Ref VPCASubnet
+      Tags:
+        - Key: Name
+          Value: TGW-Attachment-VPC-A
+
+  TGWAttachmentB:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref VPCB
+      SubnetIds:
+        - !Ref VPCBSubnet
+      Tags:
+        - Key: Name
+          Value: TGW-Attachment-VPC-B
+
+  TGWAttachmentC:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref VPCC
+      SubnetIds:
+        - !Ref VPCCSubnet
+      Tags:
+        - Key: Name
+          Value: TGW-Attachment-VPC-C
+
+  # Routes to Transit Gateway
+  VPCAToTGWRoute:
+    Type: AWS::EC2::Route
+    DependsOn: TGWAttachmentA
+    Properties:
+      RouteTableId: !Ref VPCARouteTable
+      DestinationCidrBlock: 10.0.0.0/8
+      TransitGatewayId: !Ref TransitGateway
+
+  VPCBToTGWRoute:
+    Type: AWS::EC2::Route
+    DependsOn: TGWAttachmentB
+    Properties:
+      RouteTableId: !Ref VPCBRouteTable
+      DestinationCidrBlock: 10.0.0.0/8
+      TransitGatewayId: !Ref TransitGateway
+
+  VPCCToTGWRoute:
+    Type: AWS::EC2::Route
+    DependsOn: TGWAttachmentC
+    Properties:
+      RouteTableId: !Ref VPCCRouteTable
+      DestinationCidrBlock: 10.0.0.0/8
+      TransitGatewayId: !Ref TransitGateway
+
+  # Security Groups
+  VPCASecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for VPC-A EC2 instances
+      VpcId: !Ref VPCA
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 10.0.0.0/8
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/8
+      Tags:
+        - Key: Name
+          Value: VPC-A-SecurityGroup
+
+  VPCBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for VPC-B EC2 instances
+      VpcId: !Ref VPCB
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 10.0.0.0/8
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/8
+      Tags:
+        - Key: Name
+          Value: VPC-B-SecurityGroup
+
+  VPCCSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for VPC-C EC2 instances
+      VpcId: !Ref VPCC
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 10.0.0.0/8
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/8
+      Tags:
+        - Key: Name
+          Value: VPC-C-SecurityGroup
+
+  # EC2 Instances
+  EC2InstanceA:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.micro
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref VPCASubnet
+      SecurityGroupIds:
+        - !Ref VPCASecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y aws-cli
+          echo "VPC-A Instance" > /home/ec2-user/vpc-info.txt
+          # Enable IP forwarding for testing
+          echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+          sysctl -p
+      Tags:
+        - Key: Name
+          Value: EC2-Instance-VPC-A
+
+  EC2InstanceC:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.micro
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref VPCCSubnet
+      SecurityGroupIds:
+        - !Ref VPCCSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y aws-cli
+          echo "VPC-C Instance" > /home/ec2-user/vpc-info.txt
+          # Enable IP forwarding for testing
+          echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
+          sysctl -p
+      Tags:
+        - Key: Name
+          Value: EC2-Instance-VPC-C
+
+Outputs:
+  TransitGatewayId:
+    Description: Transit Gateway ID
+    Value: !Ref TransitGateway
+    Export:
+      Name: !Sub "${AWS::StackName}-TransitGatewayId"
+
+  VPCAId:
+    Description: VPC-A ID
+    Value: !Ref VPCA
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCAId"
+
+  VPCBId:
+    Description: VPC-B ID
+    Value: !Ref VPCB
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCBId"
+
+  VPCCId:
+    Description: VPC-C ID
+    Value: !Ref VPCC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCCId"
+
+  EC2InstanceAPrivateIP:
+    Description: Private IP of EC2 instance in VPC-A
+    Value: !GetAtt EC2InstanceA.PrivateIp
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceAPrivateIP"
+
+  EC2InstanceCPrivateIP:
+    Description: Private IP of EC2 instance in VPC-C
+    Value: !GetAtt EC2InstanceC.PrivateIp
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceCPrivateIP"
+
+  EC2InstanceAInstanceId:
+    Description: Instance ID of EC2 instance in VPC-A
+    Value: !Ref EC2InstanceA
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceAInstanceId"
+
+  EC2InstanceCInstanceId:
+    Description: Instance ID of EC2 instance in VPC-C
+    Value: !Ref EC2InstanceC
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceCInstanceId"
