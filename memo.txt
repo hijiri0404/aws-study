@@ -1,0 +1,96 @@
+# 対応すべき不足ファイル一覧
+
+## 📊 総括
+- **総不足ファイル数**: 33個
+- **今回対応優先**: 8個（Networking Specialty 3個 + CKS 5個）
+- **次回対応推奨**: 25個（試験ガイド + CKAD/CKA ラボ + その他）
+
+---
+
+## 🚨 今回対応すべきファイル（8個）
+
+### AWS Networking Specialty ラボファイル（3個）
+1. `aws-certifications/networking-specialty/labs/lab03-load-balancing.md`
+2. `aws-certifications/networking-specialty/labs/lab04-security-compliance.md`
+3. `aws-certifications/networking-specialty/labs/lab05-troubleshooting.md`
+
+### Kubernetes CKS ラボファイル（5個）
+4. `kubernetes-certifications/cks/labs/lab02-cluster-hardening.md`
+5. `kubernetes-certifications/cks/labs/lab03-system-hardening.md`
+6. `kubernetes-certifications/cks/labs/lab04-microservice-security.md`
+7. `kubernetes-certifications/cks/labs/lab05-supply-chain-security.md`
+8. `kubernetes-certifications/cks/labs/lab06-monitoring-runtime-security.md`
+
+---
+
+## 📝 次回対応推奨ファイル（25個）
+
+### 📚 試験ガイドファイル（4個）
+9. `aws-certifications/devops-engineer-professional/01-exam-guide.md`
+10. `aws-certifications/ml-engineer-associate/01-exam-guide.md`
+11. `aws-certifications/networking-specialty/01-exam-guide.md`
+12. `aws-certifications/networking-specialty/01-exam-guide.md` ※重複チェック要
+
+### 🧪 CKAD ラボファイル（6個）
+13. `kubernetes-certifications/ckad/labs/lab02-configuration.md`
+14. `kubernetes-certifications/ckad/labs/lab03-multi-container-pods.md`
+15. `kubernetes-certifications/ckad/labs/lab04-observability.md`
+16. `kubernetes-certifications/ckad/labs/lab05-pod-design.md`
+17. `kubernetes-certifications/ckad/labs/lab06-services-networking.md`
+18. `kubernetes-certifications/ckad/labs/lab07-state-persistence.md`
+
+### 🛠️ CKA ラボファイル（6個）
+19. `kubernetes-certifications/cka/labs/lab03-scheduling.md`
+20. `kubernetes-certifications/cka/labs/lab04-networking.md`
+21. `kubernetes-certifications/cka/labs/lab05-storage.md`
+22. `kubernetes-certifications/cka/labs/lab06-security.md`
+23. `kubernetes-certifications/cka/labs/lab07-maintenance.md`
+24. `kubernetes-certifications/cka/labs/lab08-troubleshooting.md`
+
+### 🔧 参照ミスマッチ修正（9個）
+※ ファイルは存在するが、README内の参照パスが実際のファイル名と一致しない
+
+#### DevOps Engineer Professional（5個）
+25. README参照: `labs/lab01-cicd-pipeline/` → 実際: `lab01-enterprise-cicd-pipeline.md`
+26. README参照: `labs/lab02-infrastructure-as-code/` → 実際: `lab02-infrastructure-as-code.md`
+27. README参照: `labs/lab03-monitoring-logging/` → 実際: `lab03-monitoring-logging.md`
+28. README参照: `labs/lab04-incident-response/` → 実際: `lab04-incident-response.md`
+29. README参照: `labs/lab05-security-compliance/` → 実際: `lab05-security-compliance.md`
+
+#### その他（4個）
+30. ML Engineer Associate: 類似の参照ミスマッチ
+31. Networking Specialty: 類似の参照ミスマッチ
+32. CKS: 類似の参照ミスマッチ
+33. CKA: 類似の参照ミスマッチ
+
+---
+
+## 📋 作業計画
+
+### Phase 1: 今回実行（優先度：高）
+- [x] Networking Specialty lab03-05 作成（3個）
+- [ ] CKS lab02-06 作成（5個）
+- [ ] 練習試験を全て100問に統一（各資格）
+- [ ] 作成ファイルをGitコミット・プッシュ
+
+### Phase 2: 次回実行（優先度：中）
+- [ ] 試験ガイドファイル作成（4個）
+- [ ] CKAD/CKA ラボファイル作成（12個）
+- [ ] README参照パス修正（9個）
+
+### Phase 3: 品質向上（優先度：低）
+- [ ] 既存ファイルの内容レビューと改善
+- [ ] 統一的なファイル命名規則の適用
+- [ ] クロスリファレンスの整合性確認
+
+---
+
+## 🎯 完了目標
+- **短期**: README.mdで参照されるすべてのファイルが存在する状態
+- **中期**: 各認定試験の完全な学習教材セット完成
+- **長期**: 業界標準レベルの包括的な認定試験対策教材
+
+---
+
+**作成日**: 2025-01-10
+**最終更新**: 2025-01-10

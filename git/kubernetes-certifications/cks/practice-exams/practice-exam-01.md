@@ -106,6 +106,103 @@ sudo netstat -tlnp | grep -E "(6443|2379|10250)"
 sudo ufw deny 10255  # kubelet read-only port
 ```
 
+### 問題6 (1点)
+API Serverの監査ログを有効化し、セキュリティイベントを記録してください。
+- 監査ポリシーファイル: `/etc/kubernetes/audit-policy.yaml`
+- ログファイル: `/var/log/kubernetes/audit.log`
+
+**解答例:**
+```bash
+# 1. 監査ポリシー作成
+sudo cat > /etc/kubernetes/audit-policy.yaml << EOF
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+  resources:
+  - group: ""
+    resources: ["secrets", "configmaps"]
+- level: Request
+  resources:
+  - group: "rbac.authorization.k8s.io"
+    resources: ["roles", "rolebindings"]
+EOF
+
+# 2. API Server設定更新
+sudo vim /etc/kubernetes/manifests/kube-apiserver.yaml
+# 以下を追加:
+# --audit-log-path=/var/log/kubernetes/audit.log
+# --audit-policy-file=/etc/kubernetes/audit-policy.yaml
+```
+
+### 問題7 (1点)
+kubeletのセキュリティ設定を強化してください。
+- Read-only port無効化
+- Anonymous認証無効化
+
+**解答例:**
+```bash
+# 1. kubelet設定ファイル編集
+sudo vim /var/lib/kubelet/config.yaml
+
+# 以下を追加/変更:
+# readOnlyPort: 0
+# authentication:
+#   anonymous:
+#     enabled: false
+
+# 2. kubelet再起動
+sudo systemctl restart kubelet
+```
+
+### 問題8 (1点)
+etcdデータベースのバックアップを作成してください。
+- バックアップファイル: `/opt/etcd-backup.db`
+
+**解答例:**
+```bash
+# etcdバックアップ作成
+ETCDCTL_API=3 etcdctl snapshot save /opt/etcd-backup.db \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key
+
+# バックアップ確認
+ETCDCTL_API=3 etcdctl snapshot status /opt/etcd-backup.db
+```
+
+### 問題9 (1点)
+Control Planeコンポーネントの証明書有効期限を確認し、期限切れ前の証明書を更新してください。
+
+**解答例:**
+```bash
+# 1. 証明書有効期限確認
+sudo kubeadm certs check-expiration
+
+# 2. 期限切れ前証明書の更新
+sudo kubeadm certs renew all
+
+# 3. Control Plane再起動
+sudo systemctl restart kubelet
+```
+
+### 問題10 (1点)
+API Serverのアドミッションコントローラーを設定し、以下を有効化してください：
+- NodeRestriction
+- PodSecurityPolicy
+- ResourceQuota
+
+**解答例:**
+```bash
+# API Server設定更新（/etc/kubernetes/manifests/kube-apiserver.yaml）
+# --enable-admission-plugins に以下を追加:
+# NodeRestriction,PodSecurityPolicy,ResourceQuota
+
+# API Server再起動確認
+kubectl get pods -n kube-system | grep kube-apiserver
+```
+
 ---
 
 ## 🔒 Domain 2: Cluster Hardening (15問)
@@ -221,11 +318,182 @@ Admission Controllerを設定し、SecurityContextの設定を強制してくだ
 kubectl label namespace default pod-security.kubernetes.io/enforce=restricted
 ```
 
+### 問題11 (2点)
+ClusterRole `secret-reader` を作成し、`secrets` リソースに対して `get`, `list` 権限のみを付与してください。
+
+**解答例:**
+```bash
+kubectl create clusterrole secret-reader --verb=get,list --resource=secrets
+```
+
+### 問題12 (2点)
+`security-team` Service Accountを作成し、先ほど作成したClusterRoleをバインドしてください。
+
+**解答例:**
+```bash
+kubectl create serviceaccount security-team
+kubectl create clusterrolebinding security-team-binding \
+  --clusterrole=secret-reader \
+  --serviceaccount=default:security-team
+```
+
+### 問題13 (2点)
+Network Policyで、`database` namespace内のPodへの通信を `app-tier` labelを持つPodからのみ許可してください。
+
+**解答例:**
+```bash
+cat << EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-access-policy
+  namespace: database
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: app
+    ports:
+    - protocol: TCP
+      port: 5432
+EOF
+```
+
+### 問題14 (2点)
+PodSecurityPolicyを作成し、特権コンテナを禁止してください。
+- privileged: false
+- allowPrivilegeEscalation: false
+
+**解答例:**
+```bash
+cat << EOF | kubectl apply -f -
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: restricted-psp
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  volumes:
+  - 'configMap'
+  - 'emptyDir'
+  - 'projected'
+  - 'secret'
+  - 'downwardAPI'
+  - 'persistentVolumeClaim'
+EOF
+```
+
+### 問題15 (2点)
+ImagePolicyWebhook AdmissionControllerを設定し、許可されたレジストリからのイメージのみを許可してください。
+
+**解答例:**
+```bash
+# /etc/kubernetes/imagepolicy.json
+cat << EOF | sudo tee /etc/kubernetes/imagepolicy.json
+{
+  "imagePolicy": {
+    "kubeConfigFile": "/etc/kubernetes/admission_webhook.kubeconfig",
+    "allowTTL": 50,
+    "denyTTL": 50,
+    "retryBackoff": 500,
+    "defaultAllow": false
+  }
+}
+EOF
+
+# API Server設定に追加
+# --enable-admission-plugins=ImagePolicyWebhook
+# --admission-control-config-file=/etc/kubernetes/imagepolicy.json
+```
+
+### 問題16 (1点)
+API Server匿名アクセスのロールバインディングを確認し、不要なものを削除してください。
+
+**解答例:**
+```bash
+# 匿名アクセス確認
+kubectl get clusterrolebinding -o wide | grep system:anonymous
+
+# 不要なバインディング削除
+kubectl delete clusterrolebinding system:discovery
+```
+
+### 問題17 (1点)
+Kubernetes Dashboardのアクセス制御を強化してください。
+- admin権限ではなく、read-only権限を設定
+
+**解答例:**
+```bash
+# read-only ServiceAccount作成
+kubectl create serviceaccount dashboard-readonly -n kubernetes-dashboard
+
+# ClusterRole作成
+kubectl create clusterrole dashboard-readonly --verb=get,list,watch --resource=*.*
+
+# ClusterRoleBinding作成
+kubectl create clusterrolebinding dashboard-readonly-binding \
+  --clusterrole=dashboard-readonly \
+  --serviceaccount=kubernetes-dashboard:dashboard-readonly
+```
+
+### 問題18 (1点)
+kubeletの認証設定を確認し、webhook認証を有効化してください。
+
+**解答例:**
+```bash
+# kubelet設定ファイル編集
+sudo vim /var/lib/kubelet/config.yaml
+
+# 以下を追加:
+# authentication:
+#   webhook:
+#     enabled: true
+#   x509:
+#     clientCAFile: /etc/kubernetes/pki/ca.crt
+
+sudo systemctl restart kubelet
+```
+
+### 問題19 (1点)
+Control Planeノードへのssh接続を制限し、特定のIPアドレスからのみアクセスを許可してください。
+
+**解答例:**
+```bash
+# UFW設定
+sudo ufw deny ssh
+sudo ufw allow from 192.168.1.100 to any port 22
+
+# または/etc/hosts.allow
+echo "sshd: 192.168.1.100" | sudo tee -a /etc/hosts.allow
+echo "sshd: ALL" | sudo tee -a /etc/hosts.deny
+```
+
+### 問題20 (1点)
+APIサーバーの要求率制限（rate limiting）を設定してください。
+
+**解答例:**
+```bash
+# API Server設定に以下を追加
+# --max-requests-inflight=400
+# --max-mutating-requests-inflight=200
+
+# /etc/kubernetes/manifests/kube-apiserver.yaml を編集
+```
+
 ---
 
 ## 🛡️ Domain 3: System Hardening (15問)
 
-### 問題11 (3点)
+### 問題21 (3点)
 AppArmorプロファイルを作成し、nginxコンテナに適用してください。
 - プロファイル名: `k8s-nginx`
 - `/etc/nginx/`への読み取りアクセスのみ許可
@@ -274,7 +542,7 @@ spec:
 EOF
 ```
 
-### 問題12 (3点)
+### 問題22 (3点)
 Seccompプロファイルを作成し、許可されたsyscallのみを実行できるようにしてください。
 
 **解答例:**
@@ -320,7 +588,7 @@ spec:
 EOF
 ```
 
-### 問題13 (3点)
+### 問題23 (3点)
 ノードのLinuxカーネルモジュールを確認し、不要なモジュールをブラックリストに追加してください。
 
 **解答例:**
@@ -337,7 +605,7 @@ blacklist tipc
 EOF
 ```
 
-### 問題14 (3点)
+### 問題24 (3点)
 ファイルシステムのマウントオプションを確認し、セキュリティを強化してください。
 
 **解答例:**
@@ -349,7 +617,7 @@ mount | grep -E "(nosuid|nodev|noexec)"
 sudo mount -o remount,noexec,nosuid,nodev /tmp
 ```
 
-### 問題15 (3点)
+### 問題25 (3点)
 systemdサービスの設定を確認し、不要なサービスを無効化してください。
 
 **解答例:**
@@ -364,11 +632,156 @@ sudo systemctl stop bluetooth
 sudo systemctl stop cups
 ```
 
+### 問題26 (2点)
+カーネルパラメータを設定し、セキュリティを強化してください。
+- IP転送無効化
+- ICMP リダイレクト無効化
+
+**解答例:**
+```bash
+# /etc/sysctl.conf に追加
+cat << EOF | sudo tee -a /etc/sysctl.conf
+net.ipv4.ip_forward = 0
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.default.accept_redirects = 0
+EOF
+
+# 適用
+sudo sysctl -p
+```
+
+### 問題27 (2点)
+ノードへのSSHアクセスを強化してください。
+- Root ログイン無効化
+- パスワード認証無効化
+
+**解答例:**
+```bash
+# /etc/ssh/sshd_config 編集
+sudo sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+# SSH再起動
+sudo systemctl restart sshd
+```
+
+### 問題28 (2点)
+ファイルの実行権限を制御するため、noexecオプションでマウントされた一時ディレクトリを作成してください。
+
+**解答例:**
+```bash
+# 一時ディレクトリ作成
+sudo mkdir /tmp/secure-temp
+
+# noexecでマウント
+sudo mount -t tmpfs -o noexec,nosuid,nodev tmpfs /tmp/secure-temp
+
+# /etc/fstab に永続化
+echo "tmpfs /tmp/secure-temp tmpfs noexec,nosuid,nodev 0 0" | sudo tee -a /etc/fstab
+```
+
+### 問題29 (2点)
+auditdを設定し、ファイルアクセスを監視してください。
+- `/etc/kubernetes/` ディレクトリの監視
+
+**解答例:**
+```bash
+# audit ルール追加
+sudo auditctl -w /etc/kubernetes -p war -k kubernetes-config
+
+# 永続化（/etc/audit/rules.d/kubernetes.rules）
+echo "-w /etc/kubernetes -p war -k kubernetes-config" | sudo tee /etc/audit/rules.d/kubernetes.rules
+
+# auditd 再起動
+sudo systemctl restart auditd
+```
+
+### 問題30 (2点)
+不要なネットワークサービスを無効化してください。
+- 使用していないポートの確認と無効化
+
+**解答例:**
+```bash
+# ポート確認
+sudo ss -tuln
+
+# 不要なサービス確認・停止
+sudo systemctl list-units --type=service | grep -E "(telnet|ftp|rsh)"
+sudo systemctl disable telnet.socket
+sudo systemctl stop telnet.socket
+```
+
+### 問題31 (1点)
+ファイルシステムの権限を確認し、world-writableファイルを修正してください。
+
+**解答例:**
+```bash
+# world-writableファイル検索
+sudo find / -type f -perm -002 -exec ls -l {} \; 2>/dev/null
+
+# 権限修正例
+sudo chmod o-w /path/to/file
+```
+
+### 問題32 (1点)
+SUID/SGIDビットが設定されたファイルを確認し、不要なものを修正してください。
+
+**解答例:**
+```bash
+# SUID/SGIDファイル検索
+sudo find / -type f \( -perm -4000 -o -perm -2000 \) -exec ls -l {} \; 2>/dev/null
+
+# 不要なSUIDビット削除
+sudo chmod u-s /path/to/file
+```
+
+### 問題33 (1点)
+デフォルトのumaskを設定し、セキュアなファイル権限を確保してください。
+
+**解答例:**
+```bash
+# システム全体のumask設定
+echo "umask 022" | sudo tee -a /etc/profile
+
+# ユーザー固有設定
+echo "umask 077" >> ~/.bashrc
+```
+
+### 問題34 (1点)
+ログファイルの権限を確認し、適切に設定してください。
+
+**解答例:**
+```bash
+# ログディレクトリ権限確認
+ls -la /var/log/
+
+# 権限修正
+sudo chmod 640 /var/log/syslog
+sudo chown root:adm /var/log/syslog
+```
+
+### 問題35 (1点)
+システムのタイムゾーンと時刻同期を確認し、NTPを設定してください。
+
+**解答例:**
+```bash
+# 現在の時刻設定確認
+timedatectl status
+
+# NTP有効化
+sudo timedatectl set-ntp true
+
+# タイムゾーン設定
+sudo timedatectl set-timezone Asia/Tokyo
+```
+
 ---
 
 ## 🔍 Domain 4: Minimize Microservice Vulnerabilities (20問)
 
-### 問題16 (4点)
+### 問題36 (4点)
 Pod Security Standardsを使用して、`baseline`レベルのセキュリティを`development`名前空間に適用してください。
 
 **解答例:**
