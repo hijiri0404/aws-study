@@ -1,0 +1,8 @@
+# 小説ダウンローダー用Python依存関係
+beautifulsoup4==4.12.2
+requests==2.31.0
+boto3==1.34.0
+botocore==1.34.0
+flask==3.0.0
+gunicorn==21.2.0
+python-dotenv==1.0.0

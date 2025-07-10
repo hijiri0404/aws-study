@@ -1,0 +1,755 @@
+{
+  "version": "38.0.1",
+  "artifacts": {
+    "NovelDownloaderStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "NovelDownloaderStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "NovelDownloaderStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://471112657080/ap-northeast-1",
+      "properties": {
+        "templateFile": "NovelDownloaderStack.template.json",
+        "terminationProtection": false,
+        "tags": {
+          "CostCenter": "Engineering",
+          "Environment": "Production",
+          "Owner": "DevTeam",
+          "Project": "NovelDownloader"
+        },
+        "validateOnSynth": false,
+        "notificationArns": [],
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::471112657080:role/cdk-hnb659fds-deploy-role-471112657080-ap-northeast-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::471112657080:role/cdk-hnb659fds-cfn-exec-role-471112657080-ap-northeast-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-471112657080-ap-northeast-1/ce1e832d5f730e02e5d630324fa23d3c7010c24ce8eda8fb22225556cff753d5.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "NovelDownloaderStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::471112657080:role/cdk-hnb659fds-lookup-role-471112657080-ap-northeast-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "NovelDownloaderStack.assets"
+      ],
+      "metadata": {
+        "/NovelDownloaderStack": [
+          {
+            "type": "aws:cdk:stack-tags",
+            "data": [
+              {
+                "Key": "CostCenter",
+                "Value": "Engineering"
+              },
+              {
+                "Key": "Environment",
+                "Value": "Production"
+              },
+              {
+                "Key": "Owner",
+                "Value": "DevTeam"
+              },
+              {
+                "Key": "Project",
+                "Value": "NovelDownloader"
+              }
+            ]
+          }
+        ],
+        "/NovelDownloaderStack/WorksTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "WorksTableF5D49AFA"
+            }
+          }
+        ],
+        "/NovelDownloaderStack/WorksTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WorksTableF5D49AFA"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadsTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "DownloadsTable16E5E3CD"
+            }
+          }
+        ],
+        "/NovelDownloaderStack/DownloadsTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadsTable16E5E3CD"
+          }
+        ],
+        "/NovelDownloaderStack/UsersTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "UsersTable9725E9C8"
+            }
+          }
+        ],
+        "/NovelDownloaderStack/UsersTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UsersTable9725E9C8"
+          }
+        ],
+        "/NovelDownloaderStack/FrontendBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FrontendBucketEFE2E19C"
+          }
+        ],
+        "/NovelDownloaderStack/FrontendBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FrontendBucketPolicy1DFF75D9"
+          }
+        ],
+        "/NovelDownloaderStack/FrontendBucket/AutoDeleteObjectsCustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FrontendBucketAutoDeleteObjectsCustomResourceDB860B32"
+          }
+        ],
+        "/NovelDownloaderStack/Custom::S3AutoDeleteObjectsCustomResourceProvider": [
+          {
+            "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+            "data": true
+          }
+        ],
+        "/NovelDownloaderStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+          }
+        ],
+        "/NovelDownloaderStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F"
+          }
+        ],
+        "/NovelDownloaderStack/StorageBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StorageBucket19DB2FF8"
+          }
+        ],
+        "/NovelDownloaderStack/StorageBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StorageBucketPolicy41A048DB"
+          }
+        ],
+        "/NovelDownloaderStack/DeadLetterQueue/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DeadLetterQueue9F481546"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadQueue/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadQueue0A824017"
+          }
+        ],
+        "/NovelDownloaderStack/UserPool/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPool6BA7E5F2"
+          }
+        ],
+        "/NovelDownloaderStack/UserPoolClient/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolClient2F5918F7"
+          }
+        ],
+        "/NovelDownloaderStack/LambdaExecutionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaExecutionRoleD5C26073"
+          }
+        ],
+        "/NovelDownloaderStack/LambdaExecutionRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaExecutionRoleDefaultPolicy6D69732F"
+          }
+        ],
+        "/NovelDownloaderStack/ApiHandler/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiHandler5E7490E8"
+          }
+        ],
+        "/NovelDownloaderStack/ApiHandler/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiHandlerLogRetention907E318F"
+          }
+        ],
+        "/NovelDownloaderStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/NovelDownloaderStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/NovelDownloaderStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadProcessor/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadProcessor0C5A853D"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadProcessor/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadProcessorLogRetentionA902126E"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadProcessor/SqsEventSource:NovelDownloaderStackDownloadQueueE9362AB0/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadProcessorSqsEventSourceNovelDownloaderStackDownloadQueueE9362AB0FDE91CBC"
+          }
+        ],
+        "/NovelDownloaderStack/StatusChecker/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StatusChecker11743A0C"
+          }
+        ],
+        "/NovelDownloaderStack/StatusChecker/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StatusCheckerLogRetention1E9E1636"
+          }
+        ],
+        "/NovelDownloaderStack/CognitoAuthorizer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoAuthorizerF3215DBC"
+          }
+        ],
+        "/NovelDownloaderStack/CognitoAuthorizer/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoAuthorizerLogRetention882BE2A1"
+          }
+        ],
+        "/NovelDownloaderStack/CognitoAuthorizer/NovelDownloaderStackCognitoTokenAuthorizer018B492D:Permissions": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoAuthorizerNovelDownloaderStackCognitoTokenAuthorizer018B492DPermissions0FEF58FA"
+          }
+        ],
+        "/NovelDownloaderStack/CognitoTokenAuthorizer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoTokenAuthorizer2893DF77"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiFC28EA5C"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/CloudWatchRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiCloudWatchRole742D421D"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Account": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiAccountD6BA9E81"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiDeployment16EF56190c36fa343c0cb5029a8f1cde4aad18be"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/DeploymentStage.prod/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiEndpoint703B53F7"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiOPTIONS3E93794B"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapi38A4A4EC"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapiOPTIONS31CB929D"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/download/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapidownload3CE1029F"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/download/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapidownloadOPTIONS8DF8ED5D"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/download/POST/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.POST..api.download": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapidownloadPOSTApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EPOSTapidownloadF5961A95"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/download/POST/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.POST..api.download": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapidownloadPOSTApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EPOSTapidownload23C2D56A"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/download/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapidownloadPOST9E8676E5"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/status/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapistatus363B3C6F"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/status/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapistatusOPTIONS9FA4D442"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapistatustaskid3738B1A0"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapistatustaskidOPTIONS2FFE9D1E"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/GET/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.status.{task_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapistatustaskidGETApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EGETapistatustaskid5C1712C2"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/GET/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.status.{task_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapistatustaskidGETApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EGETapistatustaskidD07884A4"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapistatustaskidGET3AC95A90"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/works/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapiworks7E8CE39A"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/works/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapiworksOPTIONS44909E15"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/works/GET/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.works": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapiworksGETApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EGETapiworks5832641A"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/works/GET/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.works": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapiworksGETApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EGETapiworks3B1752B4"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/works/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapiworksGETE45D08F0"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/health/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapihealth1C3279BC"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/health/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapihealthOPTIONS0C9BD5A5"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/health/GET/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.health": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapihealthGETApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EGETapihealth6687C7F3"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/health/GET/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.health": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapihealthGETApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EGETapihealthCA21702B"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderApi/Default/api/health/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderApiapihealthGET16855FBA"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadRequestValidator/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadRequestValidatorD94F2B4E"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadRequestModel/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadRequestModel9951CDFF"
+          }
+        ],
+        "/NovelDownloaderStack/Distribution/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Distribution830FAC52"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpc4EFC707C"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet1SubnetE32CA014"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet1RouteTable1FF47802"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet1RouteTableAssociationD94A3AFB"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet1DefaultRouteF2F60D52"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/EIP": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet1EIPAF89D2B3"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/NATGateway": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet1NATGatewayE92F3034"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet2Subnet5C8AAA81"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet2RouteTableE34495CA"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet2RouteTableAssociationC8935470"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPublicSubnet2DefaultRoute7E2F7BAE"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet1SubnetCB3A09A7"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet1RouteTableF774C567"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet1RouteTableAssociation2341DDF2"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet1DefaultRoute57EEE84A"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/Subnet": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet2Subnet410ED9FF"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/RouteTable": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet2RouteTable42B1FBEC"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/RouteTableAssociation": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet2RouteTableAssociationD9A2C9A8"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/DefaultRoute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcPrivateSubnet2DefaultRoute6FFBE28F"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/IGW": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcIGW7CD6AA97"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/VPCGW": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcVPCGWFE09BB3D"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderVpc/RestrictDefaultSecurityGroupCustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderVpcRestrictDefaultSecurityGroupCustomResource625F1660"
+          }
+        ],
+        "/NovelDownloaderStack/Custom::VpcRestrictDefaultSGCustomResourceProvider": [
+          {
+            "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+            "data": true
+          }
+        ],
+        "/NovelDownloaderStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0"
+          }
+        ],
+        "/NovelDownloaderStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E"
+          }
+        ],
+        "/NovelDownloaderStack/NovelDownloaderCluster/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "NovelDownloaderCluster5081AD7C"
+          }
+        ],
+        "/NovelDownloaderStack/EcsTaskExecutionRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsTaskExecutionRoleC0B6A84D"
+          }
+        ],
+        "/NovelDownloaderStack/EcsTaskExecutionRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsTaskExecutionRoleDefaultPolicyDCEEFDC3"
+          }
+        ],
+        "/NovelDownloaderStack/EcsTaskRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsTaskRole8DFA0181"
+          }
+        ],
+        "/NovelDownloaderStack/TaskDefinition/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TaskDefinitionB36D86D9"
+          }
+        ],
+        "/NovelDownloaderStack/TaskDefinition/NovelDownloaderContainer/LogGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TaskDefinitionNovelDownloaderContainerLogGroup980271B9"
+          }
+        ],
+        "/NovelDownloaderStack/ApiGatewayUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiGatewayUrl"
+          }
+        ],
+        "/NovelDownloaderStack/CloudFrontUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CloudFrontUrl"
+          }
+        ],
+        "/NovelDownloaderStack/S3WebsiteUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "S3WebsiteUrl"
+          }
+        ],
+        "/NovelDownloaderStack/CognitoUserPoolId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoUserPoolId"
+          }
+        ],
+        "/NovelDownloaderStack/CognitoUserPoolClientId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoUserPoolClientId"
+          }
+        ],
+        "/NovelDownloaderStack/WorksTableName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WorksTableName"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadsTableName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadsTableName"
+          }
+        ],
+        "/NovelDownloaderStack/StorageBucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StorageBucketName"
+          }
+        ],
+        "/NovelDownloaderStack/DownloadQueueUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DownloadQueueUrl"
+          }
+        ],
+        "/NovelDownloaderStack/EcsClusterName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EcsClusterName"
+          }
+        ],
+        "/NovelDownloaderStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/NovelDownloaderStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/NovelDownloaderStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "NovelDownloaderStack"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,3459 @@
+{
+ "Description": "AWS CDK Stack for Novel Downloader Service - Serverless architecture with Lambda, DynamoDB, API Gateway",
+ "Resources": {
+  "WorksTableF5D49AFA": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "work_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "metadata_type",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "work_id",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "metadata_type",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "novel-works"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/WorksTable/Resource"
+   }
+  },
+  "DownloadsTable16E5E3CD": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "user_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "task_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "work_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "created_at",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "work-id-index",
+      "KeySchema": [
+       {
+        "AttributeName": "work_id",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "created_at",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "user_id",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "task_id",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "novel-downloads"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DownloadsTable/Resource"
+   }
+  },
+  "UsersTable9725E9C8": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "user_id",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "user_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "novel-users"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/UsersTable/Resource"
+   }
+  },
+  "FrontendBucketEFE2E19C": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "novel-downloader-frontend-471112657080",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "IgnorePublicAcls": true
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ],
+    "WebsiteConfiguration": {
+     "ErrorDocument": "error.html",
+     "IndexDocument": "index.html"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/FrontendBucket/Resource"
+   }
+  },
+  "FrontendBucketPolicy1DFF75D9": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "FrontendBucketEFE2E19C"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FrontendBucketEFE2E19C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FrontendBucketEFE2E19C",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "s3:GetObject",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "FrontendBucketEFE2E19C",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:PutBucketPolicy"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FrontendBucketEFE2E19C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FrontendBucketEFE2E19C",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/FrontendBucket/Policy/Resource"
+   }
+  },
+  "FrontendBucketAutoDeleteObjectsCustomResourceDB860B32": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "FrontendBucketEFE2E19C"
+    }
+   },
+   "DependsOn": [
+    "FrontendBucketPolicy1DFF75D9"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/FrontendBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-471112657080-ap-northeast-1",
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "FrontendBucketEFE2E19C"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "StorageBucket19DB2FF8": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "novel-downloader-storage-471112657080",
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "ExpirationInDays": 90,
+       "Id": "DeleteOldFiles",
+       "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 30
+       },
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "VersioningConfiguration": {
+     "Status": "Enabled"
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/StorageBucket/Resource"
+   }
+  },
+  "StorageBucketPolicy41A048DB": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "StorageBucket19DB2FF8"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "StorageBucket19DB2FF8",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "StorageBucket19DB2FF8",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/StorageBucket/Policy/Resource"
+   }
+  },
+  "DeadLetterQueue9F481546": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 1209600,
+    "QueueName": "novel-downloader-dlq",
+    "SqsManagedSseEnabled": true
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DeadLetterQueue/Resource"
+   }
+  },
+  "DownloadQueue0A824017": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "QueueName": "novel-downloader-queue",
+    "RedrivePolicy": {
+     "deadLetterTargetArn": {
+      "Fn::GetAtt": [
+       "DeadLetterQueue9F481546",
+       "Arn"
+      ]
+     },
+     "maxReceiveCount": 3
+    },
+    "SqsManagedSseEnabled": true,
+    "VisibilityTimeout": 900
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DownloadQueue/Resource"
+   }
+  },
+  "UserPool6BA7E5F2": {
+   "Type": "AWS::Cognito::UserPool",
+   "Properties": {
+    "AccountRecoverySetting": {
+     "RecoveryMechanisms": [
+      {
+       "Name": "verified_email",
+       "Priority": 1
+      }
+     ]
+    },
+    "AdminCreateUserConfig": {
+     "AllowAdminCreateUserOnly": false
+    },
+    "AliasAttributes": [
+     "email"
+    ],
+    "AutoVerifiedAttributes": [
+     "email"
+    ],
+    "EmailVerificationMessage": "The verification code to your new account is {####}",
+    "EmailVerificationSubject": "Verify your new account",
+    "Policies": {
+     "PasswordPolicy": {
+      "MinimumLength": 8,
+      "RequireLowercase": true,
+      "RequireNumbers": true,
+      "RequireSymbols": false,
+      "RequireUppercase": true
+     }
+    },
+    "SmsVerificationMessage": "The verification code to your new account is {####}",
+    "UserPoolName": "novel-downloader-users",
+    "VerificationMessageTemplate": {
+     "DefaultEmailOption": "CONFIRM_WITH_CODE",
+     "EmailMessage": "The verification code to your new account is {####}",
+     "EmailSubject": "Verify your new account",
+     "SmsMessage": "The verification code to your new account is {####}"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/UserPool/Resource"
+   }
+  },
+  "UserPoolClient2F5918F7": {
+   "Type": "AWS::Cognito::UserPoolClient",
+   "Properties": {
+    "AllowedOAuthFlows": [
+     "implicit",
+     "code"
+    ],
+    "AllowedOAuthFlowsUserPoolClient": true,
+    "AllowedOAuthScopes": [
+     "openid",
+     "email",
+     "profile"
+    ],
+    "CallbackURLs": [
+     "http://localhost:3000",
+     {
+      "Fn::Join": [
+       "",
+       [
+        "https://",
+        {
+         "Fn::Select": [
+          2,
+          {
+           "Fn::Split": [
+            "/",
+            {
+             "Fn::GetAtt": [
+              "FrontendBucketEFE2E19C",
+              "WebsiteURL"
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      ]
+     }
+    ],
+    "ClientName": "novel-downloader-client",
+    "ExplicitAuthFlows": [
+     "ALLOW_USER_PASSWORD_AUTH",
+     "ALLOW_USER_SRP_AUTH",
+     "ALLOW_REFRESH_TOKEN_AUTH"
+    ],
+    "GenerateSecret": false,
+    "LogoutURLs": [
+     "http://localhost:3000",
+     {
+      "Fn::Join": [
+       "",
+       [
+        "https://",
+        {
+         "Fn::Select": [
+          2,
+          {
+           "Fn::Split": [
+            "/",
+            {
+             "Fn::GetAtt": [
+              "FrontendBucketEFE2E19C",
+              "WebsiteURL"
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      ]
+     }
+    ],
+    "SupportedIdentityProviders": [
+     "COGNITO"
+    ],
+    "UserPoolId": {
+     "Ref": "UserPool6BA7E5F2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/UserPoolClient/Resource"
+   }
+  },
+  "LambdaExecutionRoleD5C26073": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     },
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "dynamodb:DeleteItem",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::GetAtt": [
+            "DownloadsTable16E5E3CD",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::GetAtt": [
+            "UsersTable9725E9C8",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::GetAtt": [
+            "WorksTableF5D49AFA",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             {
+              "Fn::GetAtt": [
+               "DownloadsTable16E5E3CD",
+               "Arn"
+              ]
+             },
+             "/index/*"
+            ]
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             {
+              "Fn::GetAtt": [
+               "WorksTableF5D49AFA",
+               "Arn"
+              ]
+             },
+             "/index/*"
+            ]
+           ]
+          }
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "DynamoDBAccess"
+     },
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::GetAtt": [
+            "StorageBucket19DB2FF8",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             {
+              "Fn::GetAtt": [
+               "StorageBucket19DB2FF8",
+               "Arn"
+              ]
+             },
+             "/*"
+            ]
+           ]
+          }
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "S3Access"
+     },
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:SendMessage"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::GetAtt": [
+            "DeadLetterQueue9F481546",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::GetAtt": [
+            "DownloadQueue0A824017",
+            "Arn"
+           ]
+          }
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "SQSAccess"
+     }
+    ],
+    "RoleName": "NovelDownloaderLambdaRole"
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/LambdaExecutionRole/Resource"
+   }
+  },
+  "LambdaExecutionRoleDefaultPolicy6D69732F": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "sqs:ChangeMessageVisibility",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:ReceiveMessage"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DownloadQueue0A824017",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LambdaExecutionRoleDefaultPolicy6D69732F",
+    "Roles": [
+     {
+      "Ref": "LambdaExecutionRoleD5C26073"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/LambdaExecutionRole/DefaultPolicy/Resource"
+   }
+  },
+  "ApiHandler5E7490E8": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-471112657080-ap-northeast-1",
+     "S3Key": "0dcc50dd575afbb07d44cfd9a6ef13392ffa18ff01db07adfe2f59b44d85f58b.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "WORKS_TABLE_NAME": {
+       "Ref": "WorksTableF5D49AFA"
+      },
+      "DOWNLOADS_TABLE_NAME": {
+       "Ref": "DownloadsTable16E5E3CD"
+      },
+      "USERS_TABLE_NAME": {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "STORAGE_BUCKET_NAME": {
+       "Ref": "StorageBucket19DB2FF8"
+      },
+      "DOWNLOAD_QUEUE_URL": {
+       "Ref": "DownloadQueue0A824017"
+      },
+      "USER_POOL_ID": {
+       "Ref": "UserPool6BA7E5F2"
+      },
+      "USER_POOL_CLIENT_ID": {
+       "Ref": "UserPoolClient2F5918F7"
+      }
+     }
+    },
+    "FunctionName": "novel-downloader-api-handler",
+    "Handler": "lambda_handler.lambda_handler",
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "LambdaExecutionRoleD5C26073",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "LambdaExecutionRoleDefaultPolicy6D69732F",
+    "LambdaExecutionRoleD5C26073"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/ApiHandler/Resource",
+    "aws:asset:path": "asset.0dcc50dd575afbb07d44cfd9a6ef13392ffa18ff01db07adfe2f59b44d85f58b",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ApiHandlerLogRetention907E318F": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "ApiHandler5E7490E8"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/ApiHandler/LogRetention/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:DeleteRetentionPolicy",
+        "logs:PutRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs20.x",
+    "Timeout": 900,
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-471112657080-ap-northeast-1",
+     "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "DownloadProcessor0C5A853D": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-471112657080-ap-northeast-1",
+     "S3Key": "1ebc9d3ac2033816c4abb63e4afd69d350b4aba8704cc9236b82ea520b74f4b0.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "WORKS_TABLE_NAME": {
+       "Ref": "WorksTableF5D49AFA"
+      },
+      "DOWNLOADS_TABLE_NAME": {
+       "Ref": "DownloadsTable16E5E3CD"
+      },
+      "STORAGE_BUCKET_NAME": {
+       "Ref": "StorageBucket19DB2FF8"
+      },
+      "DOWNLOAD_QUEUE_URL": {
+       "Ref": "DownloadQueue0A824017"
+      }
+     }
+    },
+    "FunctionName": "novel-downloader-processor",
+    "Handler": "lambda_handler.lambda_handler",
+    "MemorySize": 1024,
+    "Role": {
+     "Fn::GetAtt": [
+      "LambdaExecutionRoleD5C26073",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 900
+   },
+   "DependsOn": [
+    "LambdaExecutionRoleDefaultPolicy6D69732F",
+    "LambdaExecutionRoleD5C26073"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DownloadProcessor/Resource",
+    "aws:asset:path": "asset.1ebc9d3ac2033816c4abb63e4afd69d350b4aba8704cc9236b82ea520b74f4b0",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "DownloadProcessorLogRetentionA902126E": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "DownloadProcessor0C5A853D"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 30
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DownloadProcessor/LogRetention/Resource"
+   }
+  },
+  "DownloadProcessorSqsEventSourceNovelDownloaderStackDownloadQueueE9362AB0FDE91CBC": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "DownloadQueue0A824017",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "DownloadProcessor0C5A853D"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ],
+    "MaximumBatchingWindowInSeconds": 5
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DownloadProcessor/SqsEventSource:NovelDownloaderStackDownloadQueueE9362AB0/Resource"
+   }
+  },
+  "StatusChecker11743A0C": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-471112657080-ap-northeast-1",
+     "S3Key": "1ebc9d3ac2033816c4abb63e4afd69d350b4aba8704cc9236b82ea520b74f4b0.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "DOWNLOADS_TABLE_NAME": {
+       "Ref": "DownloadsTable16E5E3CD"
+      },
+      "STORAGE_BUCKET_NAME": {
+       "Ref": "StorageBucket19DB2FF8"
+      }
+     }
+    },
+    "FunctionName": "novel-downloader-status-checker",
+    "Handler": "lambda_handler.lambda_handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "LambdaExecutionRoleD5C26073",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "LambdaExecutionRoleDefaultPolicy6D69732F",
+    "LambdaExecutionRoleD5C26073"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/StatusChecker/Resource",
+    "aws:asset:path": "asset.1ebc9d3ac2033816c4abb63e4afd69d350b4aba8704cc9236b82ea520b74f4b0",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StatusCheckerLogRetention1E9E1636": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StatusChecker11743A0C"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/StatusChecker/LogRetention/Resource"
+   }
+  },
+  "CognitoAuthorizerF3215DBC": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-471112657080-ap-northeast-1",
+     "S3Key": "1ebc9d3ac2033816c4abb63e4afd69d350b4aba8704cc9236b82ea520b74f4b0.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "USER_POOL_ID": {
+       "Ref": "UserPool6BA7E5F2"
+      },
+      "USER_POOL_CLIENT_ID": {
+       "Ref": "UserPoolClient2F5918F7"
+      }
+     }
+    },
+    "FunctionName": "novel-downloader-cognito-authorizer",
+    "Handler": "lambda_handler.lambda_handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "LambdaExecutionRoleD5C26073",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "LambdaExecutionRoleDefaultPolicy6D69732F",
+    "LambdaExecutionRoleD5C26073"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/CognitoAuthorizer/Resource",
+    "aws:asset:path": "asset.1ebc9d3ac2033816c4abb63e4afd69d350b4aba8704cc9236b82ea520b74f4b0",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "CognitoAuthorizerLogRetention882BE2A1": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "CognitoAuthorizerF3215DBC"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/CognitoAuthorizer/LogRetention/Resource"
+   }
+  },
+  "CognitoAuthorizerNovelDownloaderStackCognitoTokenAuthorizer018B492DPermissions0FEF58FA": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CognitoAuthorizerF3215DBC",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/authorizers/",
+       {
+        "Ref": "CognitoTokenAuthorizer2893DF77"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/CognitoAuthorizer/NovelDownloaderStackCognitoTokenAuthorizer018B492D:Permissions"
+   }
+  },
+  "CognitoTokenAuthorizer2893DF77": {
+   "Type": "AWS::ApiGateway::Authorizer",
+   "Properties": {
+    "AuthorizerResultTtlInSeconds": 300,
+    "AuthorizerUri": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Fn::Select": [
+         1,
+         {
+          "Fn::Split": [
+           ":",
+           {
+            "Fn::GetAtt": [
+             "CognitoAuthorizerF3215DBC",
+             "Arn"
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       ":apigateway:",
+       {
+        "Fn::Select": [
+         3,
+         {
+          "Fn::Split": [
+           ":",
+           {
+            "Fn::GetAtt": [
+             "CognitoAuthorizerF3215DBC",
+             "Arn"
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       ":lambda:path/2015-03-31/functions/",
+       {
+        "Fn::GetAtt": [
+         "CognitoAuthorizerF3215DBC",
+         "Arn"
+        ]
+       },
+       "/invocations"
+      ]
+     ]
+    },
+    "IdentitySource": "method.request.header.Authorization",
+    "Name": "CognitoAuthorizer",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    },
+    "Type": "TOKEN"
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/CognitoTokenAuthorizer/Resource"
+   }
+  },
+  "NovelDownloaderApiFC28EA5C": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Description": "REST API for Novel Downloader Service",
+    "Name": "Novel Downloader API"
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Resource"
+   }
+  },
+  "NovelDownloaderApiCloudWatchRole742D421D": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "apigateway.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+       ]
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/CloudWatchRole/Resource"
+   }
+  },
+  "NovelDownloaderApiAccountD6BA9E81": {
+   "Type": "AWS::ApiGateway::Account",
+   "Properties": {
+    "CloudWatchRoleArn": {
+     "Fn::GetAtt": [
+      "NovelDownloaderApiCloudWatchRole742D421D",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "NovelDownloaderApiFC28EA5C"
+   ],
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Account"
+   }
+  },
+  "NovelDownloaderApiDeployment16EF56190c36fa343c0cb5029a8f1cde4aad18be": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "REST API for Novel Downloader Service",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "DependsOn": [
+    "CognitoTokenAuthorizer2893DF77",
+    "DownloadRequestModel9951CDFF",
+    "DownloadRequestValidatorD94F2B4E",
+    "NovelDownloaderApiapidownloadOPTIONS8DF8ED5D",
+    "NovelDownloaderApiapidownloadPOST9E8676E5",
+    "NovelDownloaderApiapidownload3CE1029F",
+    "NovelDownloaderApiapihealthGET16855FBA",
+    "NovelDownloaderApiapihealthOPTIONS0C9BD5A5",
+    "NovelDownloaderApiapihealth1C3279BC",
+    "NovelDownloaderApiapiOPTIONS31CB929D",
+    "NovelDownloaderApiapi38A4A4EC",
+    "NovelDownloaderApiapistatustaskidGET3AC95A90",
+    "NovelDownloaderApiapistatustaskidOPTIONS2FFE9D1E",
+    "NovelDownloaderApiapistatustaskid3738B1A0",
+    "NovelDownloaderApiapistatusOPTIONS9FA4D442",
+    "NovelDownloaderApiapistatus363B3C6F",
+    "NovelDownloaderApiapiworksGETE45D08F0",
+    "NovelDownloaderApiapiworksOPTIONS44909E15",
+    "NovelDownloaderApiapiworks7E8CE39A",
+    "NovelDownloaderApiOPTIONS3E93794B"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Deployment/Resource"
+   }
+  },
+  "NovelDownloaderApiDeploymentStageprodEF766C2B": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "NovelDownloaderApiDeployment16EF56190c36fa343c0cb5029a8f1cde4aad18be"
+    },
+    "MethodSettings": [
+     {
+      "DataTraceEnabled": true,
+      "HttpMethod": "*",
+      "LoggingLevel": "INFO",
+      "MetricsEnabled": true,
+      "ResourcePath": "/*",
+      "ThrottlingBurstLimit": 200,
+      "ThrottlingRateLimit": 100
+     }
+    ],
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    },
+    "StageName": "prod"
+   },
+   "DependsOn": [
+    "NovelDownloaderApiAccountD6BA9E81"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/DeploymentStage.prod/Resource"
+   }
+  },
+  "NovelDownloaderApiOPTIONS3E93794B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "NovelDownloaderApiFC28EA5C",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/OPTIONS/Resource"
+   }
+  },
+  "NovelDownloaderApiapi38A4A4EC": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "NovelDownloaderApiFC28EA5C",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "api",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/Resource"
+   }
+  },
+  "NovelDownloaderApiapiOPTIONS31CB929D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapi38A4A4EC"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/OPTIONS/Resource"
+   }
+  },
+  "NovelDownloaderApiapidownload3CE1029F": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "NovelDownloaderApiapi38A4A4EC"
+    },
+    "PathPart": "download",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/download/Resource"
+   }
+  },
+  "NovelDownloaderApiapidownloadOPTIONS8DF8ED5D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapidownload3CE1029F"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/download/OPTIONS/Resource"
+   }
+  },
+  "NovelDownloaderApiapidownloadPOSTApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EPOSTapidownloadF5961A95": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ApiHandler5E7490E8",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/",
+       {
+        "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+       },
+       "/POST/api/download"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/download/POST/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.POST..api.download"
+   }
+  },
+  "NovelDownloaderApiapidownloadPOSTApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EPOSTapidownload23C2D56A": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ApiHandler5E7490E8",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/test-invoke-stage/POST/api/download"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/download/POST/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.POST..api.download"
+   }
+  },
+  "NovelDownloaderApiapidownloadPOST9E8676E5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "CognitoTokenAuthorizer2893DF77"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ApiHandler5E7490E8",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "RequestModels": {
+     "application/json": {
+      "Ref": "DownloadRequestModel9951CDFF"
+     }
+    },
+    "RequestValidatorId": {
+     "Ref": "DownloadRequestValidatorD94F2B4E"
+    },
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapidownload3CE1029F"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/download/POST/Resource"
+   }
+  },
+  "NovelDownloaderApiapistatus363B3C6F": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "NovelDownloaderApiapi38A4A4EC"
+    },
+    "PathPart": "status",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/status/Resource"
+   }
+  },
+  "NovelDownloaderApiapistatusOPTIONS9FA4D442": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapistatus363B3C6F"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/status/OPTIONS/Resource"
+   }
+  },
+  "NovelDownloaderApiapistatustaskid3738B1A0": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "NovelDownloaderApiapistatus363B3C6F"
+    },
+    "PathPart": "{task_id}",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/Resource"
+   }
+  },
+  "NovelDownloaderApiapistatustaskidOPTIONS2FFE9D1E": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapistatustaskid3738B1A0"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/OPTIONS/Resource"
+   }
+  },
+  "NovelDownloaderApiapistatustaskidGETApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EGETapistatustaskid5C1712C2": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StatusChecker11743A0C",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/",
+       {
+        "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+       },
+       "/GET/api/status/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/GET/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.status.{task_id}"
+   }
+  },
+  "NovelDownloaderApiapistatustaskidGETApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EGETapistatustaskidD07884A4": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StatusChecker11743A0C",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/test-invoke-stage/GET/api/status/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/GET/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.status.{task_id}"
+   }
+  },
+  "NovelDownloaderApiapistatustaskidGET3AC95A90": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "CognitoTokenAuthorizer2893DF77"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "StatusChecker11743A0C",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "RequestParameters": {
+     "method.request.path.task_id": true
+    },
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapistatustaskid3738B1A0"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/status/{task_id}/GET/Resource"
+   }
+  },
+  "NovelDownloaderApiapiworks7E8CE39A": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "NovelDownloaderApiapi38A4A4EC"
+    },
+    "PathPart": "works",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/works/Resource"
+   }
+  },
+  "NovelDownloaderApiapiworksOPTIONS44909E15": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapiworks7E8CE39A"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/works/OPTIONS/Resource"
+   }
+  },
+  "NovelDownloaderApiapiworksGETApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EGETapiworks5832641A": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ApiHandler5E7490E8",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/",
+       {
+        "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+       },
+       "/GET/api/works"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/works/GET/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.works"
+   }
+  },
+  "NovelDownloaderApiapiworksGETApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EGETapiworks3B1752B4": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ApiHandler5E7490E8",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/test-invoke-stage/GET/api/works"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/works/GET/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.works"
+   }
+  },
+  "NovelDownloaderApiapiworksGETE45D08F0": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "CognitoTokenAuthorizer2893DF77"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ApiHandler5E7490E8",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapiworks7E8CE39A"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/works/GET/Resource"
+   }
+  },
+  "NovelDownloaderApiapihealth1C3279BC": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "NovelDownloaderApiapi38A4A4EC"
+    },
+    "PathPart": "health",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/health/Resource"
+   }
+  },
+  "NovelDownloaderApiapihealthOPTIONS0C9BD5A5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapihealth1C3279BC"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/health/OPTIONS/Resource"
+   }
+  },
+  "NovelDownloaderApiapihealthGETApiPermissionNovelDownloaderStackNovelDownloaderApi2245042EGETapihealth6687C7F3": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ApiHandler5E7490E8",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/",
+       {
+        "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+       },
+       "/GET/api/health"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/health/GET/ApiPermission.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.health"
+   }
+  },
+  "NovelDownloaderApiapihealthGETApiPermissionTestNovelDownloaderStackNovelDownloaderApi2245042EGETapihealthCA21702B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ApiHandler5E7490E8",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:ap-northeast-1:471112657080:",
+       {
+        "Ref": "NovelDownloaderApiFC28EA5C"
+       },
+       "/test-invoke-stage/GET/api/health"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/health/GET/ApiPermission.Test.NovelDownloaderStackNovelDownloaderApi2245042E.GET..api.health"
+   }
+  },
+  "NovelDownloaderApiapihealthGET16855FBA": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ApiHandler5E7490E8",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "NovelDownloaderApiapihealth1C3279BC"
+    },
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderApi/Default/api/health/GET/Resource"
+   }
+  },
+  "DownloadRequestValidatorD94F2B4E": {
+   "Type": "AWS::ApiGateway::RequestValidator",
+   "Properties": {
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    },
+    "ValidateRequestBody": true,
+    "ValidateRequestParameters": false
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DownloadRequestValidator/Resource"
+   }
+  },
+  "DownloadRequestModel9951CDFF": {
+   "Type": "AWS::ApiGateway::Model",
+   "Properties": {
+    "ContentType": "application/json",
+    "Name": "DownloadRequest",
+    "RestApiId": {
+     "Ref": "NovelDownloaderApiFC28EA5C"
+    },
+    "Schema": {
+     "type": "object",
+     "properties": {
+      "work_id": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 50
+      },
+      "options": {
+       "type": "object",
+       "properties": {
+        "start_chapter": {
+         "type": "integer"
+        },
+        "end_chapter": {
+         "type": "integer"
+        },
+        "force_update": {
+         "type": "boolean"
+        }
+       }
+      }
+     },
+     "required": [
+      "work_id"
+     ],
+     "$schema": "http://json-schema.org/draft-04/schema#"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/DownloadRequestModel/Resource"
+   }
+  },
+  "Distribution830FAC52": {
+   "Type": "AWS::CloudFront::Distribution",
+   "Properties": {
+    "DistributionConfig": {
+     "CacheBehaviors": [
+      {
+       "AllowedMethods": [
+        "GET",
+        "HEAD",
+        "OPTIONS",
+        "PUT",
+        "PATCH",
+        "POST",
+        "DELETE"
+       ],
+       "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+       "Compress": true,
+       "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+       "PathPattern": "/api/*",
+       "TargetOriginId": "NovelDownloaderStackDistributionOrigin284B82BBE",
+       "ViewerProtocolPolicy": "https-only"
+      }
+     ],
+     "Comment": "Novel Downloader Frontend Distribution",
+     "CustomErrorResponses": [
+      {
+       "ErrorCachingMinTTL": 300,
+       "ErrorCode": 404,
+       "ResponseCode": 200,
+       "ResponsePagePath": "/index.html"
+      },
+      {
+       "ErrorCachingMinTTL": 300,
+       "ErrorCode": 403,
+       "ResponseCode": 200,
+       "ResponsePagePath": "/index.html"
+      }
+     ],
+     "DefaultCacheBehavior": {
+      "AllowedMethods": [
+       "GET",
+       "HEAD"
+      ],
+      "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+      "Compress": true,
+      "TargetOriginId": "NovelDownloaderStackDistributionOrigin15221F364",
+      "ViewerProtocolPolicy": "redirect-to-https"
+     },
+     "DefaultRootObject": "index.html",
+     "Enabled": true,
+     "HttpVersion": "http2and3",
+     "IPV6Enabled": true,
+     "Origins": [
+      {
+       "CustomOriginConfig": {
+        "OriginProtocolPolicy": "http-only",
+        "OriginSSLProtocols": [
+         "TLSv1.2"
+        ]
+       },
+       "DomainName": {
+        "Fn::Select": [
+         2,
+         {
+          "Fn::Split": [
+           "/",
+           {
+            "Fn::GetAtt": [
+             "FrontendBucketEFE2E19C",
+             "WebsiteURL"
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       "Id": "NovelDownloaderStackDistributionOrigin15221F364"
+      },
+      {
+       "CustomOriginConfig": {
+        "OriginProtocolPolicy": "https-only",
+        "OriginSSLProtocols": [
+         "TLSv1.2"
+        ]
+       },
+       "DomainName": {
+        "Fn::Select": [
+         2,
+         {
+          "Fn::Split": [
+           "/",
+           {
+            "Fn::Join": [
+             "",
+             [
+              "https://",
+              {
+               "Ref": "NovelDownloaderApiFC28EA5C"
+              },
+              ".execute-api.ap-northeast-1.",
+              {
+               "Ref": "AWS::URLSuffix"
+              },
+              "/",
+              {
+               "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+              },
+              "/"
+             ]
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       "Id": "NovelDownloaderStackDistributionOrigin284B82BBE",
+       "OriginPath": {
+        "Fn::Join": [
+         "",
+         [
+          "/",
+          {
+           "Fn::Select": [
+            3,
+            {
+             "Fn::Split": [
+              "/",
+              {
+               "Fn::Join": [
+                "",
+                [
+                 "https://",
+                 {
+                  "Ref": "NovelDownloaderApiFC28EA5C"
+                 },
+                 ".execute-api.ap-northeast-1.",
+                 {
+                  "Ref": "AWS::URLSuffix"
+                 },
+                 "/",
+                 {
+                  "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+                 },
+                 "/"
+                ]
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        ]
+       }
+      }
+     ],
+     "PriceClass": "PriceClass_100"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/Distribution/Resource"
+   }
+  },
+  "NovelDownloaderVpc4EFC707C": {
+   "Type": "AWS::EC2::VPC",
+   "Properties": {
+    "CidrBlock": "10.0.0.0/16",
+    "EnableDnsHostnames": true,
+    "EnableDnsSupport": true,
+    "InstanceTenancy": "default",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "novel-downloader-vpc"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/Resource"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet1SubnetE32CA014": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-northeast-1a",
+    "CidrBlock": "10.0.0.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/Subnet"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet1RouteTable1FF47802": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/RouteTable"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet1RouteTableAssociationD94A3AFB": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet1RouteTable1FF47802"
+    },
+    "SubnetId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet1SubnetE32CA014"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/RouteTableAssociation"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet1DefaultRouteF2F60D52": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "NovelDownloaderVpcIGW7CD6AA97"
+    },
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet1RouteTable1FF47802"
+    }
+   },
+   "DependsOn": [
+    "NovelDownloaderVpcVPCGWFE09BB3D"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/DefaultRoute"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet1EIPAF89D2B3": {
+   "Type": "AWS::EC2::EIP",
+   "Properties": {
+    "Domain": "vpc",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/EIP"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet1NATGatewayE92F3034": {
+   "Type": "AWS::EC2::NatGateway",
+   "Properties": {
+    "AllocationId": {
+     "Fn::GetAtt": [
+      "NovelDownloaderVpcPublicSubnet1EIPAF89D2B3",
+      "AllocationId"
+     ]
+    },
+    "SubnetId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet1SubnetE32CA014"
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1"
+     }
+    ]
+   },
+   "DependsOn": [
+    "NovelDownloaderVpcPublicSubnet1DefaultRouteF2F60D52",
+    "NovelDownloaderVpcPublicSubnet1RouteTableAssociationD94A3AFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet1/NATGateway"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet2Subnet5C8AAA81": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-northeast-1c",
+    "CidrBlock": "10.0.1.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/Subnet"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet2RouteTableE34495CA": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/RouteTable"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet2RouteTableAssociationC8935470": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet2RouteTableE34495CA"
+    },
+    "SubnetId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet2Subnet5C8AAA81"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/RouteTableAssociation"
+   }
+  },
+  "NovelDownloaderVpcPublicSubnet2DefaultRoute7E2F7BAE": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "NovelDownloaderVpcIGW7CD6AA97"
+    },
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet2RouteTableE34495CA"
+    }
+   },
+   "DependsOn": [
+    "NovelDownloaderVpcVPCGWFE09BB3D"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PublicSubnet2/DefaultRoute"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet1SubnetCB3A09A7": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-northeast-1a",
+    "CidrBlock": "10.0.2.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Private"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Private"
+     },
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/Subnet"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet1RouteTableF774C567": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/RouteTable"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet1RouteTableAssociation2341DDF2": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPrivateSubnet1RouteTableF774C567"
+    },
+    "SubnetId": {
+     "Ref": "NovelDownloaderVpcPrivateSubnet1SubnetCB3A09A7"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/RouteTableAssociation"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet1DefaultRoute57EEE84A": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "NatGatewayId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet1NATGatewayE92F3034"
+    },
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPrivateSubnet1RouteTableF774C567"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet1/DefaultRoute"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet2Subnet410ED9FF": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-northeast-1c",
+    "CidrBlock": "10.0.3.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Private"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Private"
+     },
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/Subnet"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet2RouteTable42B1FBEC": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/RouteTable"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet2RouteTableAssociationD9A2C9A8": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPrivateSubnet2RouteTable42B1FBEC"
+    },
+    "SubnetId": {
+     "Ref": "NovelDownloaderVpcPrivateSubnet2Subnet410ED9FF"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/RouteTableAssociation"
+   }
+  },
+  "NovelDownloaderVpcPrivateSubnet2DefaultRoute6FFBE28F": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "NatGatewayId": {
+     "Ref": "NovelDownloaderVpcPublicSubnet1NATGatewayE92F3034"
+    },
+    "RouteTableId": {
+     "Ref": "NovelDownloaderVpcPrivateSubnet2RouteTable42B1FBEC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/PrivateSubnet2/DefaultRoute"
+   }
+  },
+  "NovelDownloaderVpcIGW7CD6AA97": {
+   "Type": "AWS::EC2::InternetGateway",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "novel-downloader-vpc"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/IGW"
+   }
+  },
+  "NovelDownloaderVpcVPCGWFE09BB3D": {
+   "Type": "AWS::EC2::VPCGatewayAttachment",
+   "Properties": {
+    "InternetGatewayId": {
+     "Ref": "NovelDownloaderVpcIGW7CD6AA97"
+    },
+    "VpcId": {
+     "Ref": "NovelDownloaderVpc4EFC707C"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/VPCGW"
+   }
+  },
+  "NovelDownloaderVpcRestrictDefaultSecurityGroupCustomResource625F1660": {
+   "Type": "Custom::VpcRestrictDefaultSG",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+      "Arn"
+     ]
+    },
+    "DefaultSecurityGroupId": {
+     "Fn::GetAtt": [
+      "NovelDownloaderVpc4EFC707C",
+      "DefaultSecurityGroup"
+     ]
+    },
+    "Account": "471112657080"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderVpc/RestrictDefaultSecurityGroupCustomResource/Default"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyName": "Inline",
+      "PolicyDocument": {
+       "Version": "2012-10-17",
+       "Statement": [
+        {
+         "Effect": "Allow",
+         "Action": [
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress"
+         ],
+         "Resource": [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:aws:ec2:ap-northeast-1:471112657080:security-group/",
+             {
+              "Fn::GetAtt": [
+               "NovelDownloaderVpc4EFC707C",
+               "DefaultSecurityGroup"
+              ]
+             }
+            ]
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-471112657080-ap-northeast-1",
+     "S3Key": "ee7de53d64cc9d6248fa6aa550f92358f6c907b5efd6f3298aeab1b5e7ea358a.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "__entrypoint__.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group"
+   },
+   "DependsOn": [
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.ee7de53d64cc9d6248fa6aa550f92358f6c907b5efd6f3298aeab1b5e7ea358a",
+    "aws:asset:property": "Code"
+   }
+  },
+  "NovelDownloaderCluster5081AD7C": {
+   "Type": "AWS::ECS::Cluster",
+   "Properties": {
+    "ClusterName": "novel-downloader-cluster",
+    "ClusterSettings": [
+     {
+      "Name": "containerInsights",
+      "Value": "enabled"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/NovelDownloaderCluster/Resource"
+   }
+  },
+  "EcsTaskExecutionRoleC0B6A84D": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+       ]
+      ]
+     }
+    ],
+    "RoleName": "NovelDownloaderEcsTaskExecutionRole"
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/EcsTaskExecutionRole/Resource"
+   }
+  },
+  "EcsTaskExecutionRoleDefaultPolicyDCEEFDC3": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:ecr:ap-northeast-1:471112657080:repository/cdk-hnb659fds-container-assets-471112657080-ap-northeast-1"
+      },
+      {
+       "Action": "ecr:GetAuthorizationToken",
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "TaskDefinitionNovelDownloaderContainerLogGroup980271B9",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "EcsTaskExecutionRoleDefaultPolicyDCEEFDC3",
+    "Roles": [
+     {
+      "Ref": "EcsTaskExecutionRoleC0B6A84D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/EcsTaskExecutionRole/DefaultPolicy/Resource"
+   }
+  },
+  "EcsTaskRole8DFA0181": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "dynamodb:*",
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::GetAtt": [
+            "DownloadsTable16E5E3CD",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::GetAtt": [
+            "UsersTable9725E9C8",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::GetAtt": [
+            "WorksTableF5D49AFA",
+            "Arn"
+           ]
+          }
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "DynamoDBAccess"
+     },
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "s3:*",
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::GetAtt": [
+            "StorageBucket19DB2FF8",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             {
+              "Fn::GetAtt": [
+               "StorageBucket19DB2FF8",
+               "Arn"
+              ]
+             },
+             "/*"
+            ]
+           ]
+          }
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "S3Access"
+     },
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": "sqs:*",
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::GetAtt": [
+            "DeadLetterQueue9F481546",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::GetAtt": [
+            "DownloadQueue0A824017",
+            "Arn"
+           ]
+          }
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "SQSAccess"
+     }
+    ],
+    "RoleName": "NovelDownloaderEcsTaskRole"
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/EcsTaskRole/Resource"
+   }
+  },
+  "TaskDefinitionB36D86D9": {
+   "Type": "AWS::ECS::TaskDefinition",
+   "Properties": {
+    "ContainerDefinitions": [
+     {
+      "Environment": [
+       {
+        "Name": "WORKS_TABLE_NAME",
+        "Value": {
+         "Ref": "WorksTableF5D49AFA"
+        }
+       },
+       {
+        "Name": "DOWNLOADS_TABLE_NAME",
+        "Value": {
+         "Ref": "DownloadsTable16E5E3CD"
+        }
+       },
+       {
+        "Name": "STORAGE_BUCKET_NAME",
+        "Value": {
+         "Ref": "StorageBucket19DB2FF8"
+        }
+       },
+       {
+        "Name": "DOWNLOAD_QUEUE_URL",
+        "Value": {
+         "Ref": "DownloadQueue0A824017"
+        }
+       },
+       {
+        "Name": "AWS_DEFAULT_REGION",
+        "Value": "ap-northeast-1"
+       }
+      ],
+      "Essential": true,
+      "Image": {
+       "Fn::Sub": "471112657080.dkr.ecr.ap-northeast-1.${AWS::URLSuffix}/cdk-hnb659fds-container-assets-471112657080-ap-northeast-1:300f05a13d779128febbeb91b24c19ed23e98d1b4b8f0594bd48d9ac06ffc175"
+      },
+      "LogConfiguration": {
+       "LogDriver": "awslogs",
+       "Options": {
+        "awslogs-group": {
+         "Ref": "TaskDefinitionNovelDownloaderContainerLogGroup980271B9"
+        },
+        "awslogs-stream-prefix": "novel-downloader",
+        "awslogs-region": "ap-northeast-1"
+       }
+      },
+      "Name": "novel-downloader"
+     }
+    ],
+    "Cpu": "1024",
+    "ExecutionRoleArn": {
+     "Fn::GetAtt": [
+      "EcsTaskExecutionRoleC0B6A84D",
+      "Arn"
+     ]
+    },
+    "Family": "novel-downloader-task",
+    "Memory": "2048",
+    "NetworkMode": "awsvpc",
+    "RequiresCompatibilities": [
+     "FARGATE"
+    ],
+    "TaskRoleArn": {
+     "Fn::GetAtt": [
+      "EcsTaskRole8DFA0181",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/TaskDefinition/Resource"
+   }
+  },
+  "TaskDefinitionNovelDownloaderContainerLogGroup980271B9": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "RetentionInDays": 30
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/TaskDefinition/NovelDownloaderContainer/LogGroup/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/21TwW7bMAz9lt5VbcmAATumSVsUaDfP6XotZJlx2diiK1EpMsH/Pkiy46zoiY/vyRTFRy/l4vtCLi7Uu7vU9f6yxUqGLSu9F+rdPYf6aFRHdSXDo6paEOudSWAQ7psMV17vgSM5ohwKalEfZ3rMc3KlXPz6zcnw24NPJRMYhKbGIJMMfxzYgqiN2glPYN0iGD6XMjMIVJ0MJeU2U5w7yWgQreqqWslw441mJBO1E74+gOEteavhQfU9mibKn7MF2A6dQzJxFs/KOWAnVzGIlhonwz01JTCYVPqemltLvo+fTngQqsdGMbyrowyPtAez8vxCFv+CjQfPshIcr3pML5vhSmvyhsUG+paO3TiXs2zLqknjyKAEl94RTRAPwC9UR3FEkzpeknEJbx4cP6kWa8Vks/iBe6AaklsJDEK35OudJcMybNCxxcpP0z7PBwF6KcNTr6PyVKxF4asW9dZXJi/WjEryDKctzPzMrZwjjWq6JAnJvLsihp+Kb/OgRWHxoBjmwneGwRo4HcidjNmKWemXLu0XaCfDuvWOsz0TvFE2uvio3H4DOzQ4dfGRIcMKDdiZi0XttDwb0nuwd51qIO8RaCtL6Mkhkz3mP2c2yTum7lPP/pcKSweswSbTU+G4DOMa//Lcex6EoRrkq/tyWH6Vix9yefHqEC+tN4wdyDLHf/w74WEuBAAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "NovelDownloaderStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "NovelDownloaderApiEndpoint703B53F7": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "NovelDownloaderApiFC28EA5C"
+      },
+      ".execute-api.ap-northeast-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+      },
+      "/"
+     ]
+    ]
+   }
+  },
+  "ApiGatewayUrl": {
+   "Description": "API Gateway endpoint URL",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "NovelDownloaderApiFC28EA5C"
+      },
+      ".execute-api.ap-northeast-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "NovelDownloaderApiDeploymentStageprodEF766C2B"
+      },
+      "/"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "NovelDownloader-ApiGatewayUrl"
+   }
+  },
+  "CloudFrontUrl": {
+   "Description": "CloudFront distribution URL",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Fn::GetAtt": [
+        "Distribution830FAC52",
+        "DomainName"
+       ]
+      }
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "NovelDownloader-CloudFrontUrl"
+   }
+  },
+  "S3WebsiteUrl": {
+   "Description": "S3 website URL",
+   "Value": {
+    "Fn::GetAtt": [
+     "FrontendBucketEFE2E19C",
+     "WebsiteURL"
+    ]
+   },
+   "Export": {
+    "Name": "NovelDownloader-S3WebsiteUrl"
+   }
+  },
+  "CognitoUserPoolId": {
+   "Description": "Cognito User Pool ID",
+   "Value": {
+    "Ref": "UserPool6BA7E5F2"
+   },
+   "Export": {
+    "Name": "NovelDownloader-UserPoolId"
+   }
+  },
+  "CognitoUserPoolClientId": {
+   "Description": "Cognito User Pool Client ID",
+   "Value": {
+    "Ref": "UserPoolClient2F5918F7"
+   },
+   "Export": {
+    "Name": "NovelDownloader-UserPoolClientId"
+   }
+  },
+  "WorksTableName": {
+   "Description": "DynamoDB Works Table Name",
+   "Value": {
+    "Ref": "WorksTableF5D49AFA"
+   },
+   "Export": {
+    "Name": "NovelDownloader-WorksTableName"
+   }
+  },
+  "DownloadsTableName": {
+   "Description": "DynamoDB Downloads Table Name",
+   "Value": {
+    "Ref": "DownloadsTable16E5E3CD"
+   },
+   "Export": {
+    "Name": "NovelDownloader-DownloadsTableName"
+   }
+  },
+  "StorageBucketName": {
+   "Description": "S3 Storage Bucket Name",
+   "Value": {
+    "Ref": "StorageBucket19DB2FF8"
+   },
+   "Export": {
+    "Name": "NovelDownloader-StorageBucketName"
+   }
+  },
+  "DownloadQueueUrl": {
+   "Description": "SQS Download Queue URL",
+   "Value": {
+    "Ref": "DownloadQueue0A824017"
+   },
+   "Export": {
+    "Name": "NovelDownloader-DownloadQueueUrl"
+   }
+  },
+  "EcsClusterName": {
+   "Description": "ECS Cluster Name",
+   "Value": {
+    "Ref": "NovelDownloaderCluster5081AD7C"
+   },
+   "Export": {
+    "Name": "NovelDownloader-EcsClusterName"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
